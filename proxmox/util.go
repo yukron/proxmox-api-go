@@ -91,6 +91,8 @@ func DiskSizeGB(dcSize interface{}) float64 {
 
 		if len(diskArray) >= 3 {
 			switch diskArray[2] {
+			case "T", "TB":
+				diskSize *= 1024
 			case "G", "GB":
 				//Nothing to do
 			case "M", "MB":

@@ -595,6 +595,36 @@ func NewConfigQemuFromApi(vmr *VmRef, client *Client) (config *ConfigQemu, err e
 		diskConfMap["storage"] = storageName
 		diskConfMap["file"] = fileName
 
+		filePath := diskConfMap["volume"]
+
+		// Get disk format
+		storageContent, err := client.GetStorageContent(vmr, storageName)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		var storageFormat string
+		contents := storageContent["data"].([]interface{})
+		for content := range contents {
+			storageContentMap := contents[content].(map[string]interface{})
+			if storageContentMap["volid"] == filePath {
+				storageFormat = storageContentMap["format"].(string)
+				break
+			}
+		}
+		diskConfMap["format"] = storageFormat
+
+		// Get storage type for disk
+		var storageStatus map[string]interface{}
+		storageStatus, err = client.GetStorageStatus(vmr, storageName)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		storageType := storageStatus["type"]
+
+		diskConfMap["storage_type"] = storageType
+
 		// Convert to gigabytes if disk size was received in terabytes
 		sizeIsInTerabytes, err := regexp.MatchString("[0-9]+T", diskConfMap["size"].(string))
 		if err != nil {
